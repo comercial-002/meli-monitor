@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ML Monitor — Reputação Multicontas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f5f4f0;
+  --surface:#ffffff;
+  --surface2:#f0efe9;
+  --surface3:#e8e7e0;
+  --border:#dddcd5;
+  --border2:#c8c7be;
+  --text:#1a1a16;
+  --muted:#7a7970;
+  --muted2:#a8a79e;
+  --accent:#f5c800;
+  --accent-dark:#d4a900;
+  --accent-bg:rgba(245,200,0,0.12);
+  --green:#1a9e5c;
+  --green-light:#e8f7ef;
+  --green-border:#a8dfc2;
+  --amber:#d97706;
+  --amber-light:#fef3c7;
+  --amber-border:#fcd34d;
+  --red:#dc2626;
+  --red-light:#fef2f2;
+  --red-border:#fca5a5;
+  --blue:#2563eb;
+  --blue-light:#eff6ff;
+  --platinum:#6366f1;
+  --gold:#d97706;
+  --ml-yellow:#ffe600;
+  --radius:10px;
+  --radius-sm:6px;
+  --radius-lg:16px;
+  --font:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+}
+
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;line-height:1.5}
+
+/* ── LAYOUT ─────────────────────────────── */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:20}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.content{padding:28px;flex:1}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar-brand{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.brand-mark{width:34px;height:34px;background:var(--ml-yellow);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.brand-text{font-weight:700;font-size:16px;letter-spacing:-0.3px;line-height:1.2}
+.brand-text span{display:block;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;margin-top:1px}
+
+.nav-section{padding:14px 12px 4px;font-size:10px;font-weight:600;color:var(--muted2);letter-spacing:0.08em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:1px 8px;border-radius:var(--radius-sm);cursor:pointer;font-size:13.5px;color:var(--muted);font-weight:400;transition:all .12s;position:relative}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--text);font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent-dark);border-radius:0 2px 2px 0}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+
+.sidebar-accounts{padding:12px 8px;border-top:1px solid var(--border);margin-top:auto}
+.accounts-label{font-size:10px;font-weight:600;color:var(--muted2);letter-spacing:0.08em;text-transform:uppercase;padding:0 4px;margin-bottom:8px}
+.account-chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .12s;margin-bottom:3px}
+.account-chip:hover{background:var(--surface2)}
+.account-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.account-name{font-size:12.5px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-status{font-size:10px;color:var(--muted2);font-family:var(--mono)}
+.btn-add-account{width:calc(100% - 16px);margin:4px 8px 0;padding:8px;border:1.5px dashed var(--border2);background:none;border-radius:var(--radius-sm);font-family:var(--font);font-size:12.5px;color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-add-account:hover{border-color:var(--accent-dark);color:var(--text);background:var(--accent-bg)}
+
+/* ── TOPBAR ─────────────────────────────── */
+.topbar-left{display:flex;align-items:center;gap:12px}
+.page-title{font-size:15px;font-weight:600;letter-spacing:-0.2px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);font-size:12.5px;color:var(--muted);cursor:pointer;transition:all .15s;font-weight:500}
+.refresh-btn:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.refresh-btn.spinning svg{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.last-update{font-size:11.5px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── PAGE SECTIONS ─────────────────────── */
+.page{display:none}
+.page.active{display:block}
+.page-header{margin-bottom:22px}
+.page-header h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin-bottom:3px}
+.page-header p{font-size:13.5px;color:var(--muted)}
+
+/* ── OVERVIEW GRID ─────────────────────── */
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-bottom:24px}
+
+/* ── ACCOUNT CARD ─────────────────────── */
+.account-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:box-shadow .2s,border-color .2s;box-shadow:var(--shadow)}
+.account-card:hover{box-shadow:var(--shadow-md);border-color:var(--border2)}
+.account-card.status-green{border-top:3px solid var(--green)}
+.account-card.status-yellow{border-top:3px solid #eab308}
+.account-card.status-orange{border-top:3px solid #f97316}
+.account-card.status-red{border-top:3px solid var(--red)}
+
+.card-header{padding:16px 18px 12px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border)}
+.card-header-left{display:flex;align-items:center;gap:10px}
+.store-avatar{width:40px;height:40px;border-radius:10px;background:var(--ml-yellow);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;position:relative}
+.store-info .name{font-size:14px;font-weight:600;letter-spacing:-0.2px}
+.store-info .id{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+.card-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+
+/* ── THERMOMETER ─────────────────────── */
+.thermo-wrap{padding:14px 18px;border-bottom:1px solid var(--border)}
+.thermo-label{font-size:10.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px}
+.thermo-track{display:flex;height:10px;border-radius:100px;overflow:hidden;gap:2px;margin-bottom:6px}
+.thermo-seg{flex:1;border-radius:2px;transition:opacity .3s}
+.thermo-seg.active{opacity:1}
+.thermo-seg.inactive{opacity:0.15}
+.thermo-info{display:flex;justify-content:space-between;align-items:center}
+.thermo-color{font-size:12px;font-weight:600}
+.thermo-level{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── METRICS GRID ────────────────────── */
+.metrics-grid{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric-item{background:var(--surface2);border-radius:var(--radius-sm);padding:11px 13px;position:relative;overflow:hidden}
+.metric-item.alert{background:var(--red-light);border:1px solid var(--red-border)}
+.metric-item.warn{background:var(--amber-light);border:1px solid var(--amber-border)}
+.metric-item.ok{background:var(--green-light);border:1px solid var(--green-border)}
+.metric-item .m-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.metric-item.alert .m-label{color:var(--red)}
+.metric-item.warn .m-label{color:var(--amber)}
+.metric-item.ok .m-label{color:var(--green)}
+.metric-item .m-pct{font-size:18px;font-weight:700;font-family:var(--mono);letter-spacing:-0.5px;line-height:1}
+.metric-item .m-detail{font-size:10.5px;color:var(--muted);margin-top:3px}
+.metric-item .m-limit{font-size:9.5px;margin-top:4px;padding:2px 6px;border-radius:100px;display:inline-block;font-weight:500}
+.metric-item.alert .m-limit{background:rgba(220,38,38,.12);color:var(--red)}
+.metric-item.warn .m-limit{background:rgba(217,119,6,.12);color:var(--amber)}
+.metric-item.ok .m-limit{background:rgba(26,158,92,.12);color:var(--green)}
+
+.card-footer{padding:11px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-footer .sales{font-size:12px;color:var(--muted)}
+.card-footer .sales strong{color:var(--text);font-weight:600}
+.card-footer .period{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── BADGE ───────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-platinum{background:rgba(99,102,241,.12);color:var(--platinum);border:1px solid rgba(99,102,241,.2)}
+.badge-gold{background:rgba(217,119,6,.12);color:var(--gold);border:1px solid rgba(217,119,6,.2)}
+.badge-silver{background:rgba(107,114,128,.1);color:#6b7280;border:1px solid rgba(107,114,128,.2)}
+.badge-none{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.badge-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border)}
+.badge-red{background:var(--red-light);color:var(--red);border:1px solid var(--red-border)}
+.badge-amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border)}
+.status-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ── ALERTS PANEL ────────────────────── */
+.alerts-section{margin-bottom:24px}
+.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.alert-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:box-shadow .15s}
+.alert-item:hover{box-shadow:var(--shadow)}
+.alert-item.critical{border-left:3px solid var(--red)}
+.alert-item.warning{border-left:3px solid var(--amber)}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-text .title{font-size:13.5px;font-weight:600;margin-bottom:2px}
+.alert-text .desc{font-size:12px;color:var(--muted)}
+.alert-meta{margin-left:auto;text-align:right}
+.alert-meta .store{font-size:12px;font-weight:600}
+.alert-meta .time{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── SUMMARY BAR ─────────────────────── */
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.sum-label{font-size:10.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+.sum-value{font-size:26px;font-weight:700;letter-spacing:-0.8px;font-family:var(--mono);line-height:1}
+.sum-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── TABLE ────────────────────────────── */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-header h3{font-size:14px;font-weight:600}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{text-align:left;font-size:10.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:12px 16px;font-size:13px;vertical-align:middle}
+tbody td.mono{font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* ── MODAL ───────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:calc(100vw - 32px);box-shadow:var(--shadow-md)}
+.modal h2{font-size:18px;font-weight:700;letter-spacing:-0.3px;margin-bottom:6px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:22px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.form-group input,.form-group select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:13.5px;padding:9px 12px;outline:none;transition:border .15s}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent-dark)}
+.form-group .hint{font-size:11px;color:var(--muted2);margin-top:4px}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ── BUTTONS ─────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;transition:all .12s}
+.btn-primary{background:var(--accent);color:#1a1a16;border:1px solid var(--accent-dark)}
+.btn-primary:hover{background:var(--accent-dark);color:#fff}
+.btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red-border)}
+.btn-danger:hover{background:#fee2e2}
+
+/* ── DETAIL PAGE ─────────────────────── */
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:18px;padding:5px 0;transition:color .12s}
+.back-btn:hover{color:var(--text)}
+.detail-header{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;margin-bottom:20px;display:flex;align-items:center;gap:18px}
+.detail-store-icon{width:56px;height:56px;border-radius:14px;background:var(--ml-yellow);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.detail-store-info h2{font-size:20px;font-weight:700;letter-spacing:-0.4px;margin-bottom:5px}
+.detail-store-info .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.metrics-detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+.metric-detail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.metric-detail-card.alert{border-left:3px solid var(--red)}
+.metric-detail-card.warn{border-left:3px solid var(--amber)}
+.metric-detail-card.ok{border-left:3px solid var(--green)}
+.mdc-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mdc-value{font-size:32px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1;margin-bottom:6px}
+.mdc-value.red{color:var(--red)}
+.mdc-value.amber{color:var(--amber)}
+.mdc-value.green{color:var(--green)}
+.mdc-detail{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.mdc-detail span{display:flex;justify-content:space-between}
+.mdc-detail span strong{color:var(--text)}
+.limit-bar{margin-top:10px}
+.limit-track{height:5px;background:var(--surface3);border-radius:100px;overflow:hidden;margin-top:3px}
+.limit-fill{height:100%;border-radius:100px;transition:width .5s ease}
+.limit-fill.ok{background:var(--green)}
+.limit-fill.warn{background:var(--amber)}
+.limit-fill.alert{background:var(--red)}
+.limit-labels{display:flex;justify-content:space-between;font-size:9.5px;color:var(--muted2);margin-top:3px;font-family:var(--mono)}
+
+/* ── TOAST ───────────────────────────── */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);border-radius:var(--radius-sm);padding:11px 18px;font-size:13px;font-weight:500;z-index:999;transform:translateY(60px);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);max-width:300px;box-shadow:var(--shadow-md)}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── SETTINGS ────────────────────────── */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;margin-bottom:16px}
+.settings-section h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.settings-section .desc{font-size:13px;color:var(--muted);margin-bottom:16px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--border)}
+.settings-row:first-of-type{border-top:none;padding-top:0}
+
+/* ── LOGISTICS SECTION ───────────────────── */
+.logistics-wrap{padding:13px 18px;border-bottom:1px solid var(--border)}
+.logistics-label{font-size:10.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.logistics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.logistics-item{background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px}
+.logistics-item.full{grid-column:1/-1}
+.li-label{font-size:9.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+.li-value{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--text);line-height:1}
+.li-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+.li-value.urgent{color:var(--red)}
+.li-value.ok{color:var(--green)}
+.li-value.warn{color:var(--amber)}
+.schedule-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.schedule-row:last-child{border-bottom:none}
+.schedule-day{font-size:11px;font-weight:600;color:var(--muted);width:36px;text-transform:uppercase}
+.schedule-times{display:flex;gap:10px;align-items:center}
+.schedule-badge{font-size:11px;font-family:var(--mono);padding:2px 7px;border-radius:4px;font-weight:500}
+.schedule-badge.cutoff{background:var(--red-light);color:var(--red)}
+.schedule-badge.window{background:var(--blue-light);color:var(--blue)}
+.schedule-badge.off{background:var(--surface3);color:var(--muted2)}
+.capacity-bar{margin-top:6px}
+.cap-track{height:4px;background:var(--surface3);border-radius:100px;overflow:hidden;margin-top:4px}
+.cap-fill{height:100%;border-radius:100px}
+.cap-fill.ok{background:var(--green)}
+.cap-fill.warn{background:var(--amber)}
+.cap-fill.full{background:var(--red)}
+
+/* MISC */
+.chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font-size:10.5px;font-weight:600;font-family:var(--mono)}
+.chip-green{background:var(--green-light);color:var(--green)}
+.chip-amber{background:var(--amber-light);color:var(--amber)}
+.chip-red{background:var(--red-light);color:var(--red)}
+
+@media(max-width:900px){
+  .sidebar{width:200px}
+  .main{margin-left:200px}
+  .summary-bar{grid-template-columns:repeat(2,1fr)}
+  .metrics-detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:680px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── SIDEBAR ──────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">🛒</div>
+    <div class="brand-text">ML Monitor<span>Reputação Multicontas</span></div>
+  </div>
+
+  <div class="nav-section">Menu</div>
+  <nav>
+    <div class="nav-item active" onclick="goPage('overview')"><span class="nav-icon">⊞</span>Visão Geral</div>
+    <div class="nav-item" onclick="goPage('alerts')"><span class="nav-icon">🔔</span>Alertas <span id="alert-badge" style="margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:100px;font-weight:600"></span></div>
+    <div class="nav-item" onclick="goPage('comparison')"><span class="nav-icon">⇌</span>Comparativo</div>
+    <div class="nav-item" onclick="goPage('settings')"><span class="nav-icon">⚙</span>Configurações</div>
+  </nav>
+
+  <div class="sidebar-accounts">
+    <div class="accounts-label">Contas conectadas</div>
+    <div id="sidebar-account-list"></div>
+    <button class="btn-add-account" onclick="openAddModal()">＋ Adicionar conta</button>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="page-title" id="topbar-title">Visão Geral</span>
+    </div>
+    <div class="topbar-right">
+      <span class="last-update" id="last-update-label">—</span>
+      <button class="refresh-btn" id="refresh-btn" onclick="refreshAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── PAGE: OVERVIEW ──────────────── -->
+    <div id="page-overview" class="page active">
+      <div class="summary-bar" id="summary-bar"></div>
+
+      <div class="alerts-section" id="top-alerts-section" style="display:none">
+        <div class="section-title">🔴 Alertas críticos</div>
+        <div id="top-alerts-list"></div>
+      </div>
+
+      <div class="section-title">Contas monitoradas</div>
+      <div class="overview-grid" id="overview-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted2)">
+          <div style="font-size:36px;margin-bottom:12px">🏪</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:6px">Nenhuma conta ainda</div>
+          <div style="font-size:13px;margin-bottom:18px">Adicione sua primeira conta de vendedor do Mercado Livre</div>
+          <button class="btn btn-primary" onclick="openAddModal()">＋ Adicionar conta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: ALERTS ──────────────── -->
+    <div id="page-alerts" class="page">
+      <div class="page-header">
+        <h1>Alertas</h1>
+        <p>Métricas fora dos limites recomendados pelo Mercado Livre</p>
+      </div>
+      <div id="alerts-full-list"></div>
+    </div>
+
+    <!-- ── PAGE: COMPARISON ──────────── -->
+    <div id="page-comparison" class="page">
+      <div class="page-header">
+        <h1>Comparativo de Contas</h1>
+        <p>Todas as métricas lado a lado</p>
+      </div>
+      <div class="table-card">
+        <div class="table-wrap">
+          <table id="comparison-table">
+            <thead>
+              <tr>
+                <th>Conta</th>
+                <th>Termômetro</th>
+                <th>Indicador</th>
+                <th>Vendas</th>
+                <th>Reclamações</th>
+                <th>Mediações</th>
+                <th>Cancelamentos</th>
+                <th>Env. incorretos</th>
+                <th>Corte hoje</th>
+                <th>Preparação</th>
+                <th>Capacidade</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: DETAIL ───────────────── -->
+    <div id="page-detail" class="page">
+      <div class="back-btn" onclick="goPage('overview')">← Voltar para visão geral</div>
+      <div class="detail-header">
+        <div class="detail-store-icon" id="d-icon">🏪</div>
+        <div class="detail-store-info">
+          <h2 id="d-name">—</h2>
+          <div class="meta" id="d-meta"></div>
+        </div>
+      </div>
+      <div class="metrics-detail-grid" id="d-metrics-grid"></div>
+      <div class="table-card">
+        <div class="table-header"><h3>Histórico de variação (simulado)</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Termômetro</th><th>Reclamações</th><th>Mediações</th><th>Cancelamentos</th><th>Env. incorretos</th></tr></thead>
+            <tbody id="d-history"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: SETTINGS ─────────────── -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <h1>Configurações</h1>
+        <p>Gerencie contas e preferências do sistema</p>
+      </div>
+
+      <div class="settings-section">
+        <h3>Aplicação Mercado Livre</h3>
+        <p class="desc">Credenciais do app criado em <a href="https://developers.mercadolivre.com.br" target="_blank" style="color:var(--accent-dark)">developers.mercadolivre.com.br</a>. Necessárias para autenticar as contas de vendedor.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="form-group" style="margin:0">
+            <label>Client ID (App ID)</label>
+            <input type="text" id="cfg-client-id" placeholder="Ex: 1234567890123456" value=""/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Client Secret</label>
+            <input type="password" id="cfg-client-secret" placeholder="••••••••••••••••" value=""/>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-primary" onclick="saveCredentials()">Salvar credenciais</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Contas conectadas</h3>
+        <p class="desc">Gerencie as contas de vendedor monitoradas. Cada conta precisa de um Access Token válido do OAuth.</p>
+        <div id="settings-accounts-list"></div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="openAddModal()">＋ Adicionar conta</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Limites de alerta (Brasil — MLB)</h3>
+        <p class="desc">Limites do Mercado Livre para cada métrica. Acima destes valores o termômetro é impactado.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px" id="limits-display"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ── MODAL: ADICIONAR CONTA ─────────── -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal" style="max-width:520px">
+    <h2>Adicionar conta de vendedor</h2>
+    <p>Conecte uma conta do Mercado Livre para monitorar sua reputação e envios.</p>
+
+    <!-- Step tabs -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">
+      <div id="step-tab-1" style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--accent-bg);color:var(--text);border-right:1px solid var(--border)">1. Configurar</div>
+      <div id="step-tab-2" style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--muted);border-right:1px solid var(--border)">2. Autorizar</div>
+      <div id="step-tab-3" style="flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface2);color:var(--muted)">3. Ativar</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="modal-step-1">
+      <div class="form-group">
+        <label>Nome da conta (apelido interno)</label>
+        <input type="text" id="new-account-name" placeholder="Ex: Loja Principal, Conta MG, Setor Eletrônicos"/>
+      </div>
+      <div class="form-group">
+        <label>Modo de dados</label>
+        <select id="new-account-mode" onchange="onModeChange(this.value)">
+          <option value="demo">🧪 Simulado (teste sem credenciais reais)</option>
+          <option value="real">🔴 Real (OAuth com Mercado Livre)</option>
+        </select>
+      </div>
+      <div id="real-mode-section" style="display:none">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;margin-bottom:13px;font-size:13px;line-height:1.6">
+          <strong style="font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2)">Pré-requisito — App no Developer Center</strong><br/>
+          Cadastre a URL abaixo como <em>Redirect URI</em> no seu app em
+          <a href="https://developers.mercadolivre.com.br/devcenter" target="_blank" style="color:var(--accent-dark)">developers.mercadolivre.com.br</a>:
+          <div style="background:var(--surface3);border-radius:5px;padding:7px 10px;margin:8px 0;font-family:var(--mono);font-size:11.5px;word-break:break-all" id="redirect-uri-display">—</div>
+          Fluxos: <strong>Authorization Code + Refresh Token + PKCE</strong> &nbsp;|&nbsp; Negócios: <strong>Mercado Livre + VIS</strong>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label>App ID (Client ID)</label>
+            <input type="text" id="new-app-id" placeholder="1234567890123456"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Client Secret</label>
+            <input type="password" id="new-app-secret" placeholder="••••••••••••"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="handleStep1()">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="modal-step-2" style="display:none">
+      <div style="text-align:center;padding:6px 0 18px">
+        <div style="font-size:36px;margin-bottom:12px">🔐</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px">Autorize o acesso da conta do vendedor</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px">
+          Clique em "Abrir autorização". O vendedor faz login no ML e autoriza.<br/>
+          Em seguida copie o código exibido na tela de callback.
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:14px;margin-bottom:12px" onclick="openMLAuth()">
+          🛒 Abrir autorização no Mercado Livre
+        </button>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;font-size:12.5px;color:var(--muted);text-align:left;line-height:1.7">
+          <strong style="color:var(--text)">O que vai acontecer:</strong><br/>
+          1. Nova aba abre com login do Mercado Livre<br/>
+          2. Vendedor faz login e autoriza o app<br/>
+          3. É redirecionado para a página <code style="font-family:var(--mono);font-size:11px;background:var(--surface3);padding:1px 4px;border-radius:3px">callback.html</code><br/>
+          4. A página exibe o código — copie-o<br/>
+          5. Volte aqui e cole no próximo passo
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Voltar</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Já tenho o código →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="modal-step-3" style="display:none">
+      <div class="form-group">
+        <label>Código de autorização (da página callback)</label>
+        <input type="text" id="new-auth-code" placeholder="TG-XXXXXXXXXXXXXXXX-XXXXXXXXX" style="font-family:var(--mono);font-size:12.5px"/>
+        <div class="hint">Cole o código copiado da página de callback. Ele expira em <strong>10 minutos</strong> após a autorização.</div>
+      </div>
+      <div id="token-status" style="display:none;padding:11px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:8px"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Voltar</button>
+        <button class="btn btn-primary" id="btn-exchange" onclick="exchangeCodeForToken()">✓ Conectar conta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  CONFIG & CONSTANTS
+// ════════════════════════════════════════════
+const ML_API = 'https://api.mercadolibre.com';
+
+// Limits for Brazil (MLB) — official Mercado Livre thresholds
+const LIMITS = {
+  claims:   { max: 0.01, warn: 0.008, label: 'Reclamações', unit: '%', tip: 'Máx 1% para Mercado Líder' },
+  mediations:{ max: 0.01, warn: 0.008, label: 'Mediações', unit: '%', tip: 'Máx 1% para Mercado Líder' },
+  cancellations:{ max: 0.02, warn: 0.015, label: 'Cancelamentos', unit: '%', tip: 'Máx 2%' },
+  delayed:  { max: 0.10, warn: 0.08, label: 'Env. incorretos/atraso', unit: '%', tip: 'Máx 10%' },
+};
+
+const THERMO_LEVELS = {
+  '5_green':  { label:'Verde',   color:'#16a34a', emoji:'🟢', order:5 },
+  '4_light_green':{ label:'Verde claro', color:'#65a30d', emoji:'🟢', order:4 },
+  '3_yellow': { label:'Amarelo', color:'#ca8a04', emoji:'🟡', order:3 },
+  '2_orange': { label:'Laranja', color:'#ea580c', emoji:'🟠', order:2 },
+  '1_red':    { label:'Vermelho',color:'#dc2626', emoji:'🔴', order:1 },
+  null:        { label:'Sem dados', color:'#9ca3af', emoji:'⚪', order:0 },
+};
+
+const SELLER_STATUS = {
+  platinum: { label:'Mercado Líder Platinum', badge:'badge-platinum', emoji:'💎' },
+  gold:     { label:'Mercado Líder Gold',     badge:'badge-gold',     emoji:'🥇' },
+  silver:   { label:'Mercado Líder Silver',   badge:'badge-silver',   emoji:'🥈' },
+  null:     { label:'Sem indicador',           badge:'badge-none',     emoji:'—'  },
+};
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+const state = {
+  accounts: [],       // { id, name, token, mode, data, loading, error, lastFetched }
+  appCredentials: { clientId:'', clientSecret:'' },
+  currentPage: 'overview',
+};
+
+// ════════════════════════════════════════════
+//  MOCK DATA GENERATOR
+// ════════════════════════════════════════════
+function generateMockData(seed) {
+  const rng = (a, b) => a + (Math.sin(seed * 9301 + a * 49297) * 0.5 + 0.5) * (b - a);
+  const levels = ['5_green','5_green','4_light_green','3_yellow','2_orange'];
+  const sellers = ['platinum','gold','gold','silver',null];
+  const li = Math.floor(rng(0,5));
+  const completed = Math.floor(rng(40,400));
+  const claims_val = Math.floor(rng(0,8));
+  const med_val = Math.floor(rng(0,6));
+  const cancel_val = Math.floor(rng(0,10));
+  const delayed_val = Math.floor(rng(0,30));
+
+  // Shipping schedule mock — cross_docking typical Brazil
+  const cutoffHour = [10,11,12,13][Math.floor(rng(0,4))];
+  const cutoffStr = `${String(cutoffHour).padStart(2,'0')}:00`;
+  const limitStr  = `${String(cutoffHour+2).padStart(2,'0')}:00`;
+  const workSat   = rng(0,1) > 0.4;
+  const workSun   = rng(0,1) > 0.75;
+
+  const schedule = {
+    monday:    { work:true,    cutoff:cutoffStr, from:'08:00', to:limitStr },
+    tuesday:   { work:true,    cutoff:cutoffStr, from:'08:00', to:limitStr },
+    wednesday: { work:true,    cutoff:cutoffStr, from:'08:00', to:limitStr },
+    thursday:  { work:true,    cutoff:cutoffStr, from:'08:00', to:limitStr },
+    friday:    { work:true,    cutoff:cutoffStr, from:'08:00', to:limitStr },
+    saturday:  { work:workSat, cutoff:workSat?'09:00':null, from:workSat?'08:00':null, to:workSat?'11:00':null },
+    sunday:    { work:workSun, cutoff:workSun?'08:00':null, from:workSun?'07:00':null, to:workSun?'09:00':null },
+  };
+
+  // Processing time mock (hours): 0=same day,24=1day,48=2days
+  const ptOptions = [0, 24, 24, 48, 72];
+  const processing_time = ptOptions[Math.floor(rng(0,5))];
+
+  // Capacity mock (packages/day)
+  const capacity_total = [30,50,80,100,150,200][Math.floor(rng(0,6))];
+  const capacity_used  = Math.floor(rng(0, capacity_total * 0.9));
+
+  return {
+    level_id: levels[li],
+    power_seller_status: sellers[li],
+    transactions: { completed: completed + Math.floor(rng(200,2000)), total: completed + Math.floor(rng(200,2100)), period:'historic' },
+    metrics: {
+      sales: { period:'60 days', completed },
+      claims: { period:'60 days', rate: +(claims_val/completed).toFixed(4), value: claims_val },
+      mediations: { period:'60 days', rate: +(med_val/completed).toFixed(4), value: med_val },
+      cancellations: { period:'60 days', rate: +(cancel_val/completed).toFixed(4), value: cancel_val },
+      delayed_handling_time: { period:'60 days', rate: +(delayed_val/completed).toFixed(4), value: delayed_val },
+    },
+    shipping: {
+      logistic_type: 'cross_docking',
+      schedule,
+      processing_time,   // hours; 0 = mesmo dia
+      capacity: { total: capacity_total, used: capacity_used },
+    }
+  };
+}
+
+// ════════════════════════════════════════════
+//  API CALLS
+// ════════════════════════════════════════════
+async function fetchAccountData(account) {
+  if (account.mode === 'demo') {
+    await new Promise(r => setTimeout(r, 400 + Math.random()*600));
+    return generateMockData(account.id.charCodeAt(0) + account.id.charCodeAt(1||0));
+  }
+
+  // ── 1. Reputation (/users/me) ──────────────
+  const userRes = await fetch(`${ML_API}/users/me`, {
+    headers: { 'Authorization': `Bearer ${account.token}` }
+  });
+  if (!userRes.ok) throw new Error(`Reputação: HTTP ${userRes.status}`);
+  const user = await userRes.json();
+  const rep  = user.seller_reputation;
+  const userId = user.id;
+
+  // Detect logistic type from shipping_preferences
+  let logistic_type = 'cross_docking'; // default for MLB
+  try {
+    const prefRes = await fetch(`${ML_API}/users/${userId}/shipping_preferences`, {
+      headers: { 'Authorization': `Bearer ${account.token}` }
+    });
+    if (prefRes.ok) {
+      const prefs = await prefRes.json();
+      // Find active me2 logistic type
+      const me2 = prefs.logistics?.find(l => l.mode === 'me2');
+      if (me2?.types?.length) {
+        const active = me2.types.find(t => t.default) || me2.types[0];
+        logistic_type = active.type;
+      }
+    }
+  } catch(_) {}
+
+  // ── 2. Shipping Schedule (/users/{id}/shipping/schedule/{logistic}) ──
+  let schedule = null;
+  try {
+    const schRes = await fetch(`${ML_API}/users/${userId}/shipping/schedule/${logistic_type}`, {
+      headers: { 'Authorization': `Bearer ${account.token}` }
+    });
+    if (schRes.ok) {
+      const schData = await schRes.json();
+      // API returns { seller_id, schedule: { monday: { work, detail:[{from,to,cutoff,...}] } } }
+      const raw = schData.schedule || {};
+      schedule = {};
+      const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      for (const day of days) {
+        const d = raw[day];
+        if (!d) { schedule[day] = { work:false }; continue; }
+        const detail = d.detail?.[0] || {};
+        schedule[day] = {
+          work:   d.work ?? true,
+          cutoff: detail.cutoff || null,
+          from:   detail.from   || null,
+          to:     detail.to     || null,
+        };
+      }
+    }
+  } catch(_) {}
+
+  // ── 3. Processing time (/shipping/users/{id}/processing_time_middleend/{logistic}) ──
+  let processing_time = null;
+  try {
+    const ptRes = await fetch(`${ML_API}/shipping/users/${userId}/processing_time_middleend/${logistic_type}`, {
+      headers: { 'Authorization': `Bearer ${account.token}`, 'X-Version':'v3' }
+    });
+    if (ptRes.ok) {
+      const ptData = await ptRes.json();
+      // Returns { handling_time: { value, unit } } — convert to hours
+      const ht = ptData.handling_time || ptData;
+      processing_time = ht.unit === 'hours' ? ht.value
+        : ht.unit === 'days'  ? ht.value * 24
+        : ht.value ?? null;
+    }
+  } catch(_) {}
+
+  // ── 4. Capacity (/users/{id}/capacity_middleend/{logistic}) ──
+  let capacity = null;
+  try {
+    const capRes = await fetch(`${ML_API}/users/${userId}/capacity_middleend/${logistic_type}`, {
+      headers: { 'Authorization': `Bearer ${account.token}` }
+    });
+    if (capRes.ok) {
+      const capData = await capRes.json();
+      // Returns { capacity: N, used: N } or { daily_capacity, current_usage }
+      capacity = {
+        total: capData.capacity ?? capData.daily_capacity ?? 0,
+        used:  capData.used     ?? capData.current_usage  ?? 0,
+      };
+    }
+  } catch(_) {}
+
+  return {
+    level_id:            rep.level_id,
+    power_seller_status: rep.power_seller_status,
+    transactions:        rep.transactions,
+    metrics: {
+      sales:                rep.metrics?.sales                || { period:'—', completed:0 },
+      claims:               rep.metrics?.claims               || { period:'—', rate:0, value:0 },
+      mediations:           rep.metrics?.mediations           || { period:'—', rate:0, value:0 },
+      cancellations:        rep.metrics?.cancellations        || { period:'—', rate:0, value:0 },
+      delayed_handling_time:rep.metrics?.delayed_handling_time|| { period:'—', rate:0, value:0 },
+    },
+    shipping: { logistic_type, schedule, processing_time, capacity }
+  };
+}
+
+// ════════════════════════════════════════════
+//  MODAL — OAUTH PKCE FLOW
+// ════════════════════════════════════════════
+let _pkce = { verifier: null, challenge: null };
+let _pendingName = '';
+let _pendingAppId = '';
+let _pendingSecret = '';
+
+function getRedirectURI() {
+  // Use the actual current page URL with callback.html
+  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
+  return base + 'callback.html';
+}
+
+async function generatePKCE() {
+  // code_verifier: random 43-128 char string
+  const array = new Uint8Array(40);
+  crypto.getRandomValues(array);
+  const verifier = btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '').substring(0, 64);
+
+  // code_challenge: SHA-256(verifier) base64url
+  const encoder = new TextEncoder();
+  const digest = await crypto.subtle.digest('SHA-256', encoder.encode(verifier));
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+  return { verifier, challenge };
+}
+
+function onModeChange(val) {
+  document.getElementById('real-mode-section').style.display = val === 'real' ? 'block' : 'none';
+  if (val === 'real') {
+    document.getElementById('redirect-uri-display').textContent = getRedirectURI();
+  }
+}
+
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById(`modal-step-${i}`).style.display = i === n ? 'block' : 'none';
+    const tab = document.getElementById(`step-tab-${i}`);
+    if (i === n) {
+      tab.style.background = 'var(--accent-bg)'; tab.style.color = 'var(--text)'; tab.style.fontWeight = '600';
+    } else {
+      tab.style.background = 'var(--surface2)'; tab.style.color = 'var(--muted)'; tab.style.fontWeight = '500';
+    }
+  });
+}
+
+async function handleStep1() {
+  const name = document.getElementById('new-account-name').value.trim();
+  const mode = document.getElementById('new-account-mode').value;
+  if (!name) return toast('Digite um nome para a conta.');
+
+  if (mode === 'demo') {
+    // Skip OAuth — add demo account directly
+    const id = Date.now().toString(36);
+    state.accounts.push({ id, name, token: 'demo', mode: 'demo', appId: '', secret: '', data: null, loading: true, error: null, lastFetched: null });
+    closeModal();
+    renderAll();
+    fetchOne(id);
+    return;
+  }
+
+  const appId  = document.getElementById('new-app-id').value.trim();
+  const secret = document.getElementById('new-app-secret').value.trim();
+  if (!appId || !secret) return toast('Preencha App ID e Client Secret.');
+
+  _pendingName   = name;
+  _pendingAppId  = appId;
+  _pendingSecret = secret;
+  _pkce = await generatePKCE();
+
+  goStep(2);
+}
+
+function openMLAuth() {
+  if (!_pendingAppId) return toast('Configure o App ID primeiro.');
+  const redirectURI = getRedirectURI();
+  const state = Math.random().toString(36).substring(2);
+  const url = `https://auth.mercadolivre.com.br/authorization` +
+    `?response_type=code` +
+    `&client_id=${encodeURIComponent(_pendingAppId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectURI)}` +
+    `&code_challenge=${encodeURIComponent(_pkce.challenge)}` +
+    `&code_challenge_method=S256` +
+    `&state=${state}`;
+  window.open(url, '_blank', 'width=600,height=700,noopener');
+}
+
+async function exchangeCodeForToken() {
+  const code = document.getElementById('new-auth-code').value.trim();
+  if (!code) return toast('Cole o código de autorização.');
+
+  const btn    = document.getElementById('btn-exchange');
+  const status = document.getElementById('token-status');
+  btn.disabled = true;
+  btn.textContent = 'Trocando código…';
+  status.style.display = 'block';
+  status.style.background = 'var(--blue-light)';
+  status.style.border = '1px solid #bfdbfe';
+  status.style.color = 'var(--blue)';
+  status.textContent = '⏳ Solicitando token ao Mercado Livre…';
+
+  try {
+    // Exchange code for token via ML API
+    // Note: browsers block direct POST to api.mercadolibre.com from file:// due to CORS.
+    // When served via HTTPS (Vercel/ngrok) this works correctly.
+    const res = await fetch('https://api.mercadolibre.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: _pendingAppId,
+        client_secret: _pendingSecret,
+        code,
+        redirect_uri: getRedirectURI(),
+        code_verifier: _pkce.verifier,
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.access_token) {
+      throw new Error(data.message || data.error || `Erro ${res.status}`);
+    }
+
+    const id = Date.now().toString(36);
+    state.accounts.push({
+      id,
+      name: _pendingName,
+      token: data.access_token,
+      refreshToken: data.refresh_token,
+      mode: 'real',
+      appId: _pendingAppId,
+      secret: _pendingSecret,
+      data: null, loading: true, error: null,
+      lastFetched: null,
+      tokenExpiresAt: Date.now() + (data.expires_in || 21600) * 1000,
+    });
+
+    closeModal();
+    renderAll();
+    fetchOne(id);
+    toast(`✅ Conta "${_pendingName}" conectada com sucesso!`, 'success');
+
+  } catch(e) {
+    status.style.background = 'var(--red-light)';
+    status.style.border = '1px solid var(--red-border)';
+    status.style.color = 'var(--red)';
+    status.textContent = `❌ Erro: ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = '✓ Tentar novamente';
+  }
+}
+
+function openAddModal() {
+  document.getElementById('new-account-name').value = '';
+  document.getElementById('new-account-mode').value = 'demo';
+  document.getElementById('new-auth-code').value = '';
+  document.getElementById('real-mode-section').style.display = 'none';
+  document.getElementById('token-status').style.display = 'none';
+  const btn = document.getElementById('btn-exchange');
+  btn.disabled = false; btn.textContent = '✓ Conectar conta';
+  _pkce = { verifier: null, challenge: null };
+  goStep(1);
+  document.getElementById('modal-add').classList.add('open');
+  setTimeout(() => document.getElementById('new-account-name').focus(), 50);
+}
+function closeModal() { document.getElementById('modal-add').classList.remove('open'); }
+
+async function fetchOne(id) {
+  const acc = state.accounts.find(a => a.id === id);
+  if (!acc) return;
+  acc.loading = true;
+  acc.error = null;
+  renderAll();
+  try {
+    acc.data = await fetchAccountData(acc);
+    acc.lastFetched = new Date();
+    acc.loading = false;
+  } catch(e) {
+    acc.loading = false;
+    acc.error = e.message;
+    toast(`Erro ao buscar "${acc.name}": ${e.message}`);
+  }
+  renderAll();
+}
+
+function removeAccount(id) {
+  if (!confirm('Remover esta conta?')) return;
+  state.accounts = state.accounts.filter(a => a.id !== id);
+  renderAll();
+  toast('Conta removida.');
+}
+
+async function refreshAll() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  for (const acc of state.accounts) {
+    acc.loading = true; acc.data = null; acc.error = null;
+  }
+  renderAll();
+  await Promise.all(state.accounts.map(a => fetchOne(a.id)));
+  btn.classList.remove('spinning');
+  document.getElementById('last-update-label').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ════════════════════════════════════════════
+//  RENDER HELPERS
+// ════════════════════════════════════════════
+function metricStatus(key, rate) {
+  const l = LIMITS[key];
+  if (!l) return 'ok';
+  if (rate >= l.max) return 'alert';
+  if (rate >= l.warn) return 'warn';
+  return 'ok';
+}
+
+function pct(rate) { return (rate * 100).toFixed(2) + '%'; }
+
+function fmtProcessingTime(hours) {
+  if (hours === null || hours === undefined) return '—';
+  if (hours === 0) return 'Mesmo dia';
+  if (hours === 24) return '1 dia útil';
+  if (hours === 48) return '2 dias úteis';
+  if (hours === 72) return '3 dias úteis';
+  return `${hours}h`;
+}
+
+function todaySchedule(schedule) {
+  if (!schedule) return null;
+  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const dayName = days[new Date().getDay()];
+  return schedule[dayName] || null;
+}
+
+function cutoffStatus(cutoffStr) {
+  // Returns 'ok', 'warn' (within 2h), 'urgent' (within 1h), 'past', or null
+  if (!cutoffStr) return null;
+  const [h, m] = cutoffStr.split(':').map(Number);
+  const now = new Date();
+  const cutoff = new Date(); cutoff.setHours(h, m, 0, 0);
+  const diffMin = (cutoff - now) / 60000;
+  if (diffMin < 0) return 'past';
+  if (diffMin <= 60) return 'urgent';
+  if (diffMin <= 120) return 'warn';
+  return 'ok';
+}
+
+const DAY_LABELS = {
+  monday:'Seg', tuesday:'Ter', wednesday:'Qua',
+  thursday:'Qui', friday:'Sex', saturday:'Sáb', sunday:'Dom'
+};
+
+function thermoCard(level_id) {
+  const levels = ['1_red','2_orange','3_yellow','4_light_green','5_green'];
+  const colors = ['#dc2626','#f97316','#eab308','#84cc16','#22c55e'];
+  const active = levels.indexOf(level_id || '1_red');
+  return `<div class="thermo-track">${levels.map((l,i) => `<div class="thermo-seg ${i<=active?'active':'inactive'}" style="background:${colors[i]}"></div>`).join('')}</div>`;
+}
+
+function renderAccountCard(acc) {
+  if (acc.loading) return `
+    <div class="account-card">
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="store-avatar">⏳</div>
+          <div class="store-info"><div class="name">${acc.name}</div><div class="id">Carregando…</div></div>
+        </div>
+      </div>
+      <div style="padding:40px;text-align:center;color:var(--muted2)">
+        <div style="width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent-dark);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px"></div>
+        <div style="font-size:12px">Buscando dados da API…</div>
+      </div>
+    </div>`;
+  if (acc.error) return `
+    <div class="account-card status-red">
+      <div class="card-header"><div class="card-header-left"><div class="store-avatar">⚠️</div><div class="store-info"><div class="name">${acc.name}</div><div class="id">Erro de conexão</div></div></div></div>
+      <div style="padding:20px;font-size:13px;color:var(--red)">${acc.error}</div>
+      <div style="padding:12px 18px;border-top:1px solid var(--border)"><button class="btn btn-ghost" onclick="fetchOne('${acc.id}')">↻ Tentar novamente</button></div>
+    </div>`;
+
+  const d = acc.data;
+  const lvl = THERMO_LEVELS[d.level_id] || THERMO_LEVELS[null];
+  const sel = SELLER_STATUS[d.power_seller_status] || SELLER_STATUS[null];
+  const m = d.metrics;
+  const sh = d.shipping || {};
+
+  const cardStatus = d.level_id==='5_green'||d.level_id==='4_light_green' ? 'status-green'
+    : d.level_id==='3_yellow' ? 'status-yellow'
+    : d.level_id==='2_orange' ? 'status-orange' : 'status-red';
+
+  const metrics = [
+    { key:'claims',       rate: m.claims.rate,        val: m.claims.value        },
+    { key:'mediations',   rate: m.mediations?.rate||0, val: m.mediations?.value||0 },
+    { key:'cancellations',rate: m.cancellations.rate,  val: m.cancellations.value  },
+    { key:'delayed',      rate: m.delayed_handling_time.rate, val: m.delayed_handling_time.value },
+  ];
+
+  // ── Logistics section ───────────────────────
+  const todaySch  = todaySchedule(sh.schedule);
+  const ctStatus  = todaySch?.work ? cutoffStatus(todaySch.cutoff) : 'past';
+  const ptLabel   = fmtProcessingTime(sh.processing_time);
+  const cap       = sh.capacity;
+  const capPct    = cap ? Math.min(Math.round(cap.used / cap.total * 100), 100) : 0;
+  const capCls    = capPct >= 90 ? 'full' : capPct >= 70 ? 'warn' : 'ok';
+  const capValCls = capPct >= 90 ? 'urgent' : capPct >= 70 ? 'warn' : 'ok';
+
+  const cutoffValueClass = ctStatus === 'urgent' ? 'urgent' : ctStatus === 'warn' ? 'warn' : ctStatus === 'past' ? 'urgent' : 'ok';
+  const cutoffDisplay = !todaySch?.work ? '— Sem coleta' : ctStatus === 'past' ? `${todaySch.cutoff} ✓ Passou` : (todaySch.cutoff || '—');
+
+  const logisticsHtml = `
+    <div class="logistics-wrap">
+      <div class="logistics-label">
+        <span>📦 Envios de hoje</span>
+        <span style="font-size:10px;color:var(--muted2);font-family:var(--mono)">${sh.logistic_type||'—'}</span>
+      </div>
+      <div class="logistics-grid">
+        <div class="logistics-item">
+          <div class="li-label">Horário de corte</div>
+          <div class="li-value ${cutoffValueClass}">${cutoffDisplay}</div>
+          <div class="li-sub">${todaySch?.work ? `Janela: ${todaySch.from||'—'} – ${todaySch.to||'—'}` : 'Não trabalha hoje'}</div>
+        </div>
+        <div class="logistics-item">
+          <div class="li-label">Tempo de preparação</div>
+          <div class="li-value">${ptLabel}</div>
+          <div class="li-sub">para despachar</div>
+        </div>
+        ${cap ? `
+        <div class="logistics-item full">
+          <div class="li-label">Capacidade de envio</div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div class="li-value ${capValCls}">${cap.used} <span style="font-size:12px;color:var(--muted);font-weight:400">/ ${cap.total} pacotes</span></div>
+            <span style="font-size:11px;font-family:var(--mono);color:var(--muted2)">${capPct}%</span>
+          </div>
+          <div class="cap-track"><div class="cap-fill ${capCls}" style="width:${capPct}%"></div></div>
+        </div>` : ''}
+      </div>
+    </div>`;
+
+  return `<div class="account-card ${cardStatus}">
+    <div class="card-header">
+      <div class="card-header-left">
+        <div class="store-avatar">🏪</div>
+        <div class="store-info">
+          <div class="name">${acc.name}</div>
+          <div class="id">${acc.mode==='demo'?'modo demo':'ID real'} · ${m.sales.period}</div>
+        </div>
+      </div>
+      <div class="card-badges">
+        <span class="badge ${sel.badge}">${sel.emoji} ${d.power_seller_status ? sel.label.replace('Mercado Líder ','') : '—'}</span>
+      </div>
+    </div>
+    <div class="thermo-wrap">
+      <div class="thermo-label">Termômetro de reputação</div>
+      ${thermoCard(d.level_id)}
+      <div class="thermo-info">
+        <span class="thermo-color" style="color:${lvl.color}">${lvl.emoji} ${lvl.label}</span>
+        <span class="thermo-level">${d.level_id||'—'}</span>
+      </div>
+    </div>
+    ${logisticsHtml}
+    <div class="metrics-grid">
+      ${metrics.map(({key,rate,val}) => {
+        const st = metricStatus(key, rate);
+        const lim = LIMITS[key];
+        return `<div class="metric-item ${st}" onclick="showDetail('${acc.id}')" style="cursor:pointer">
+          <div class="m-label">${lim.label}</div>
+          <div class="m-pct">${pct(rate)}</div>
+          <div class="m-detail">${val} ocorr. / ${m.sales.completed} vendas</div>
+          <div class="m-limit">Limite ${pct(lim.max)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card-footer">
+      <span class="sales">Vendas: <strong>${m.sales.completed}</strong> no período · <strong>${d.transactions.completed.toLocaleString('pt-BR')}</strong> históricas</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="fetchOne('${acc.id}')">↻</button>
+        <button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="showDetail('${acc.id}')">Detalhes →</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════
+//  RENDER PAGES
+// ════════════════════════════════════════════
+function renderOverview() {
+  // Summary bar
+  const loaded = state.accounts.filter(a => a.data && !a.loading);
+  const total = state.accounts.length;
+  const alerts = loaded.filter(a => {
+    const m = a.data.metrics;
+    return [m.claims.rate, m.mediations?.rate||0, m.cancellations.rate, m.delayed_handling_time.rate]
+      .some((r,i) => r >= Object.values(LIMITS)[i].max);
+  }).length;
+  const greens = loaded.filter(a => a.data.level_id === '5_green' || a.data.level_id === '4_light_green').length;
+  const totalSales = loaded.reduce((s,a) => s + a.data.metrics.sales.completed, 0);
+
+  document.getElementById('summary-bar').innerHTML = `
+    <div class="sum-card"><div class="sum-label">Contas</div><div class="sum-value">${total}</div><div class="sum-sub">monitoradas</div></div>
+    <div class="sum-card"><div class="sum-label">Em alerta</div><div class="sum-value" style="color:${alerts?'var(--red)':'var(--green)'}">${alerts}</div><div class="sum-sub">métricas no limite</div></div>
+    <div class="sum-card"><div class="sum-label">Reputação boa</div><div class="sum-value" style="color:var(--green)">${greens}</div><div class="sum-sub">verde / verde claro</div></div>
+    <div class="sum-card"><div class="sum-label">Vendas (período)</div><div class="sum-value">${totalSales.toLocaleString('pt-BR')}</div><div class="sum-sub">soma de todas as contas</div></div>`;
+
+  // Top alerts
+  const allAlerts = buildAlerts();
+  const topSec = document.getElementById('top-alerts-section');
+  const topList = document.getElementById('top-alerts-list');
+  if (allAlerts.filter(a=>a.level==='critical').length) {
+    topSec.style.display='block';
+    topList.innerHTML = allAlerts.filter(a=>a.level==='critical').slice(0,3).map(renderAlertItem).join('');
+  } else { topSec.style.display='none'; }
+
+  // Alert badge in nav
+  document.getElementById('alert-badge').textContent = allAlerts.length || '';
+
+  // Cards
+  const grid = document.getElementById('overview-grid');
+  if (!state.accounts.length) {
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted2)"><div style="font-size:36px;margin-bottom:12px">🏪</div><div style="font-size:15px;font-weight:600;margin-bottom:6px">Nenhuma conta ainda</div><div style="font-size:13px;margin-bottom:18px">Adicione sua primeira conta de vendedor do Mercado Livre</div><button class="btn btn-primary" onclick="openAddModal()">＋ Adicionar conta</button></div>`;
+    return;
+  }
+  grid.innerHTML = state.accounts.map(renderAccountCard).join('');
+}
+
+function buildAlerts() {
+  const alerts = [];
+  for (const acc of state.accounts) {
+    if (!acc.data) continue;
+    const m = acc.data.metrics;
+    const checks = [
+      { key:'claims', rate:m.claims.rate, val:m.claims.value },
+      { key:'mediations', rate:m.mediations?.rate||0, val:m.mediations?.value||0 },
+      { key:'cancellations', rate:m.cancellations.rate, val:m.cancellations.value },
+      { key:'delayed', rate:m.delayed_handling_time.rate, val:m.delayed_handling_time.value },
+    ];
+    for (const {key,rate,val} of checks) {
+      const l = LIMITS[key];
+      if (rate >= l.max) alerts.push({ level:'critical', account:acc.name, metric:l.label, rate, val, limit:l.max, key });
+      else if (rate >= l.warn) alerts.push({ level:'warning', account:acc.name, metric:l.label, rate, val, limit:l.max, key });
+    }
+  }
+  return alerts;
+}
+
+function renderAlertItem(a) {
+  return `<div class="alert-item ${a.level}">
+    <div class="alert-icon">${a.level==='critical'?'🔴':'🟡'}</div>
+    <div class="alert-text">
+      <div class="title">${a.metric} acima do limite</div>
+      <div class="desc">${pct(a.rate)} (limite: ${pct(a.limit)}) — ${a.val} ocorrências</div>
+    </div>
+    <div class="alert-meta">
+      <div class="store">${a.account}</div>
+      <div class="time">agora</div>
+    </div>
+  </div>`;
+}
+
+function renderAlertsPage() {
+  const alerts = buildAlerts();
+  const el = document.getElementById('alerts-full-list');
+  if (!alerts.length) {
+    el.innerHTML=`<div style="text-align:center;padding:60px;color:var(--muted2)"><div style="font-size:36px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:600">Tudo dentro dos limites!</div><p style="font-size:13px;margin-top:6px">Nenhuma métrica está acima dos limites do Mercado Livre.</p></div>`;
+    return;
+  }
+  el.innerHTML = alerts.map(renderAlertItem).join('');
+}
+
+function renderComparison() {
+  const tbody = document.getElementById('comparison-tbody');
+  if (!state.accounts.length) { tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted2)">Nenhuma conta adicionada</td></tr>`; return; }
+  tbody.innerHTML = state.accounts.map(acc => {
+    if (acc.loading) return `<tr><td><strong>${acc.name}</strong></td><td colspan="10" style="color:var(--muted2)">Carregando…</td></tr>`;
+    if (!acc.data) return `<tr><td><strong>${acc.name}</strong></td><td colspan="10" style="color:var(--red)">Erro</td></tr>`;
+    const d = acc.data;
+    const m = d.metrics;
+    const sh = d.shipping || {};
+    const lvl = THERMO_LEVELS[d.level_id] || THERMO_LEVELS[null];
+    const sel = SELLER_STATUS[d.power_seller_status] || SELLER_STATUS[null];
+    const row = (key,rate,val) => {
+      const st = metricStatus(key,rate);
+      return `<td><span class="chip chip-${st==='alert'?'red':st==='warn'?'amber':'green'}">${pct(rate)}</span> <span style="color:var(--muted2);font-size:11px">${val}x</span></td>`;
+    };
+    const ts = todaySchedule(sh.schedule);
+    const cs = ts?.work ? cutoffStatus(ts.cutoff) : 'past';
+    const cutoffCls = cs==='urgent'?'chip-red':cs==='warn'?'chip-amber':cs==='past'?'chip-amber':'chip-green';
+    const cutoffTxt = !ts?.work ? '—' : ts.cutoff || '—';
+    const cap = sh.capacity;
+    const capPct = cap ? Math.min(Math.round(cap.used/cap.total*100),100) : 0;
+    return `<tr onclick="showDetail('${acc.id}')" style="cursor:pointer">
+      <td><strong>${acc.name}</strong><div style="font-size:10.5px;color:var(--muted2)">${acc.mode==='demo'?'demo':'real'}</div></td>
+      <td><span style="color:${lvl.color};font-weight:600">${lvl.emoji} ${lvl.label}</span></td>
+      <td><span class="badge ${sel.badge}" style="font-size:10px">${d.power_seller_status||'—'}</span></td>
+      <td class="mono">${m.sales.completed.toLocaleString('pt-BR')}</td>
+      ${row('claims',m.claims.rate,m.claims.value)}
+      ${row('mediations',m.mediations?.rate||0,m.mediations?.value||0)}
+      ${row('cancellations',m.cancellations.rate,m.cancellations.value)}
+      ${row('delayed',m.delayed_handling_time.rate,m.delayed_handling_time.value)}
+      <td><span class="chip ${!ts?.work?'chip-amber':cutoffCls}" style="font-family:var(--mono)">${cutoffTxt}</span></td>
+      <td class="mono">${fmtProcessingTime(sh.processing_time)}</td>
+      <td>${cap?`<span class="chip chip-${capPct>=90?'red':capPct>=70?'amber':'green'}">${capPct}%</span> <span style="font-size:10.5px;color:var(--muted2)">${cap.used}/${cap.total}</span>`:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSidebarAccounts() {
+  const el = document.getElementById('sidebar-account-list');
+  el.innerHTML = state.accounts.map(acc => {
+    const color = !acc.data ? '#9ca3af'
+      : acc.data.level_id==='5_green'||acc.data.level_id==='4_light_green' ? 'var(--green)'
+      : acc.data.level_id==='3_yellow' ? '#ca8a04'
+      : acc.data.level_id==='2_orange' ? '#ea580c' : 'var(--red)';
+    return `<div class="account-chip" onclick="showDetail('${acc.id}')">
+      <div class="account-dot" style="background:${color}"></div>
+      <span class="account-name">${acc.name}</span>
+      <span class="account-status">${acc.loading?'…':acc.error?'ERR':acc.data?.metrics.sales.completed||0}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderSettingsAccounts() {
+  const el = document.getElementById('settings-accounts-list');
+  if (!state.accounts.length) { el.innerHTML=`<p style="font-size:13px;color:var(--muted2)">Nenhuma conta adicionada.</p>`; return; }
+  el.innerHTML = state.accounts.map(acc => `
+    <div class="settings-row">
+      <div>
+        <div style="font-size:13.5px;font-weight:600">${acc.name}</div>
+        <div style="font-size:12px;color:var(--muted2)">${acc.mode==='demo'?'🧪 Modo simulado':'🔴 API real'} · ${acc.lastFetched?'Atualizado '+acc.lastFetched.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Nunca'}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="fetchOne('${acc.id}')">↻ Atualizar</button>
+        <button class="btn btn-danger" onclick="removeAccount('${acc.id}')">Remover</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderLimitsDisplay() {
+  const el = document.getElementById('limits-display');
+  el.innerHTML = Object.entries(LIMITS).map(([k,l])=>`
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">${l.label}</div>
+      <div style="font-size:20px;font-weight:700;font-family:var(--mono);color:var(--red)">${pct(l.max)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">Alerta em ${pct(l.warn)}</div>
+      <div style="font-size:11px;color:var(--muted2);margin-top:2px">${l.tip}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════
+//  DETAIL PAGE
+// ════════════════════════════════════════════
+function showDetail(id) {
+  const acc = state.accounts.find(a => a.id === id);
+  if (!acc || !acc.data) return toast('Dados ainda não disponíveis.');
+  const d = acc.data;
+  const m = d.metrics;
+  const sh = d.shipping || {};
+  const lvl = THERMO_LEVELS[d.level_id] || THERMO_LEVELS[null];
+  const sel = SELLER_STATUS[d.power_seller_status] || SELLER_STATUS[null];
+
+  document.getElementById('d-name').textContent = acc.name;
+  document.getElementById('d-meta').innerHTML = `
+    <span class="badge ${sel.badge}">${sel.emoji} ${sel.label}</span>
+    <span class="badge" style="color:${lvl.color};border-color:${lvl.color}30;background:${lvl.color}15">${lvl.emoji} ${lvl.label}</span>
+    <span style="font-size:12px;color:var(--muted2)">${acc.mode==='demo'?'🧪 Simulado':'🔴 API real'}</span>`;
+
+  const metDefs = [
+    { key:'claims', label:'Reclamações', rate:m.claims.rate, val:m.claims.value, icon:'📢',
+      desc:'Porcentagem de vendas com reclamação abertas pelo comprador.' },
+    { key:'mediations', label:'Mediações (com ML)', rate:m.mediations?.rate||0, val:m.mediations?.value||0, icon:'⚖️',
+      desc:'Reclamações que chegaram à etapa de mediação com o Mercado Livre.' },
+    { key:'cancellations', label:'Cancelamentos pelo vendedor', rate:m.cancellations.rate, val:m.cancellations.value, icon:'❌',
+      desc:'Vendas canceladas pelo próprio vendedor, sem reclamação prévia.' },
+    { key:'delayed', label:'Envios incorretos / com atraso', rate:m.delayed_handling_time.rate, val:m.delayed_handling_time.value, icon:'📦',
+      desc:'Vendas despachadas fora do prazo ou com problemas de envio.' },
+  ];
+
+  const cap = sh.capacity;
+  const capPct = cap ? Math.min(Math.round(cap.used / cap.total * 100), 100) : 0;
+  const capCls = capPct >= 90 ? 'full' : capPct >= 70 ? 'warn' : 'ok';
+
+  // Weekly schedule table
+  const dayOrder = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const scheduleRows = sh.schedule ? dayOrder.map(day => {
+    const s = sh.schedule[day];
+    if (!s) return '';
+    const isToday = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].indexOf(day) === new Date().getDay();
+    return `<div class="schedule-row" style="${isToday?'background:var(--accent-bg);border-radius:4px;padding:5px 6px;margin:-5px -6px;':''}">
+      <span class="schedule-day">${DAY_LABELS[day]}${isToday?' ◀':''}</span>
+      <div class="schedule-times">
+        ${s.work ? `
+          <span class="schedule-badge cutoff">Corte ${s.cutoff||'—'}</span>
+          <span class="schedule-badge window">${s.from||'?'} – ${s.to||'?'}</span>
+        ` : `<span class="schedule-badge off">Sem coleta</span>`}
+      </div>
+    </div>`;
+  }).join('') : '<p style="font-size:13px;color:var(--muted2)">Agenda não disponível</p>';
+
+  document.getElementById('d-metrics-grid').innerHTML = `
+    ${metDefs.map(mt => {
+      const st = metricStatus(mt.key, mt.rate);
+      const l = LIMITS[mt.key];
+      const fillPct = Math.min(mt.rate / l.max * 100, 100).toFixed(1);
+      return `<div class="metric-detail-card ${st}">
+        <div class="mdc-title">${mt.icon} ${mt.label}</div>
+        <div class="mdc-value ${st==='alert'?'red':st==='warn'?'amber':'green'}">${pct(mt.rate)}</div>
+        <div class="mdc-detail">
+          <span>Ocorrências <strong>${mt.val}</strong></span>
+          <span>Vendas no período <strong>${m.sales.completed}</strong></span>
+          <span>Limite oficial <strong>${pct(l.max)}</strong></span>
+        </div>
+        <div class="limit-bar">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted2)"><span>0%</span><span>Limite ${pct(l.max)}</span></div>
+          <div class="limit-track"><div class="limit-fill ${st}" style="width:${fillPct}%"></div></div>
+          <div style="font-size:10px;color:var(--muted2);margin-top:2px">${mt.desc}</div>
+        </div>
+      </div>`;
+    }).join('')}
+
+    <div class="metric-detail-card ok" style="grid-column:1/-1">
+      <div class="mdc-title">📦 Configuração de envios — <span style="font-family:var(--mono);font-size:11px;font-weight:400">${sh.logistic_type||'—'}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Tempo de preparação</div>
+          <div style="font-size:22px;font-weight:700;font-family:var(--mono)">${fmtProcessingTime(sh.processing_time)}</div>
+          <div style="font-size:11px;color:var(--muted)">Prazo para despachar após venda</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Capacidade diária</div>
+          <div style="font-size:22px;font-weight:700;font-family:var(--mono)">${cap ? cap.total : '—'} <span style="font-size:13px;color:var(--muted);font-weight:400">pacotes</span></div>
+          ${cap ? `<div style="font-size:11px;color:var(--muted)">${cap.used} usados hoje (${capPct}%)</div>
+          <div class="cap-track" style="margin-top:5px"><div class="cap-fill ${capCls}" style="width:${capPct}%"></div></div>` : ''}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Corte hoje</div>
+          ${(() => {
+            const ts = todaySchedule(sh.schedule);
+            const cs = ts?.work ? cutoffStatus(ts.cutoff) : 'past';
+            const cls = cs === 'urgent' ? 'red' : cs === 'warn' ? 'amber' : cs === 'past' ? 'muted' : 'green';
+            return `<div style="font-size:22px;font-weight:700;font-family:var(--mono);color:var(--${cls})">${ts?.work ? (ts.cutoff||'—') : '—'}</div>
+            <div style="font-size:11px;color:var(--muted)">${!ts?.work ? 'Sem coleta hoje' : cs==='past'?'Horário já passou':cs==='urgent'?'⚠️ Menos de 1h!':cs==='warn'?'Atenção: < 2h restantes':'Dentro do prazo'}</div>`;
+          })()}
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Agenda semanal de coletas</div>
+      <div style="display:flex;flex-direction:column;gap:2px">${scheduleRows}</div>
+    </div>`;
+
+  // Fake history
+  document.getElementById('d-history').innerHTML = Array.from({length:7},(_,i) => {
+    const date = new Date(); date.setDate(date.getDate()-6+i);
+    const seed2 = acc.id.charCodeAt(0) + i * 17;
+    const hr = (Math.sin(seed2)*0.5+0.5)*0.02;
+    const cr = (Math.sin(seed2*7)*0.5+0.5)*0.04;
+    const canr = (Math.sin(seed2*3)*0.5+0.5)*0.03;
+    const dr = (Math.sin(seed2*11)*0.5+0.5)*0.15;
+    const li2 = ['1_red','2_orange','3_yellow','4_light_green','5_green'];
+    const lv = li2[Math.floor((Math.sin(seed2*5)*0.5+0.5)*5)];
+    const lc2 = THERMO_LEVELS[lv]||THERMO_LEVELS[null];
+    return `<tr>
+      <td class="mono">${date.toLocaleDateString('pt-BR')}</td>
+      <td><span style="color:${lc2.color};font-weight:600">${lc2.emoji} ${lc2.label}</span></td>
+      <td><span class="chip chip-${hr>=0.01?'red':hr>=0.008?'amber':'green'}">${pct(hr)}</span></td>
+      <td><span class="chip chip-${hr>=0.01?'red':hr>=0.008?'amber':'green'}">${pct(cr*0.3)}</span></td>
+      <td><span class="chip chip-${canr>=0.02?'red':canr>=0.015?'amber':'green'}">${pct(canr)}</span></td>
+      <td><span class="chip chip-${dr>=0.10?'red':dr>=0.08?'amber':'green'}">${pct(dr)}</span></td>
+    </tr>`;
+  }).join('');
+
+  goPage('detail');
+}
+
+// ════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════
+const PAGE_TITLES = { overview:'Visão Geral', alerts:'Alertas', comparison:'Comparativo', settings:'Configurações', detail:'Detalhes da Conta' };
+
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.textContent.toLowerCase().includes(name.substring(0,4))) n.classList.add('active');
+  });
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[name]||name;
+  state.currentPage = name;
+  if(name==='alerts') renderAlertsPage();
+  if(name==='comparison') renderComparison();
+  if(name==='settings'){ renderSettingsAccounts(); renderLimitsDisplay(); }
+}
+
+function renderAll() {
+  renderSidebarAccounts();
+  if(state.currentPage==='overview') renderOverview();
+  if(state.currentPage==='alerts') renderAlertsPage();
+  if(state.currentPage==='comparison') renderComparison();
+}
+
+document.getElementById('modal-add').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+// ════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════
+function saveCredentials() {
+  state.appCredentials.clientId = document.getElementById('cfg-client-id').value.trim();
+  state.appCredentials.clientSecret = document.getElementById('cfg-client-secret').value.trim();
+  toast('Credenciais salvas! ✅');
+}
+
+// ════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+(function init() {
+  renderOverview();
+  renderLimitsDisplay();
+
+  // Pre-load 3 demo accounts for first-time experience
+  const demos = [
+    { name:'Loja Principal', id:'demo1' },
+    { name:'Conta Nordeste', id:'demo2' },
+    { name:'Setor Eletrônicos', id:'demo3' },
+  ];
+  for (const d of demos) {
+    state.accounts.push({ id:d.id, name:d.name, token:'demo', mode:'demo', data:null, loading:true, error:null, lastFetched:null });
+  }
+  renderAll();
+  Promise.all(state.accounts.map(a => fetchOne(a.id))).then(() => {
+    document.getElementById('last-update-label').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  });
+})();
+</script>
+</body>
+</html>

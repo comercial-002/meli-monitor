@@ -1509,26 +1509,20 @@ function toast(msg) {
   });
 })();
 async function enviarCodigo(code) {
-  try {
-    console.log("CODE:", code);
+  console.log("CODE RECEBIDO:", code);
 
+  try {
     const res = await fetch('/api/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     });
 
     const data = await res.json();
-
-    console.log("Resposta do backend:", data);
-
-    alert("Conta conectada!");
+    console.log("Resposta:", data);
 
   } catch (err) {
     console.error("ERRO:", err);
-    alert("Erro ao conectar com backend");
   }
 }
 </script>

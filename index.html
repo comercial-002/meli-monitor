@@ -1508,30 +1508,26 @@ function toast(msg) {
     document.getElementById('last-update-label').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   });
 })();
-  async function enviarCodigo(code) {
+async function enviarCodigo(code) {
   try {
+    console.log("CODE:", code);
+
     const res = await fetch('/api/token', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ code })
-})
-.then(res => res.json())
-.then(data => {
-  console.log("Token recebido:", data);
-})
-.catch(err => {
-  console.error("Erro:", err);
-});
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code })
+    });
 
     const data = await res.json();
+
     console.log("Resposta do backend:", data);
 
-    alert("Funcionou! Veja no console (F12)");
+    alert("Conta conectada!");
 
   } catch (err) {
-    console.error("Erro:", err);
+    console.error("ERRO:", err);
     alert("Erro ao conectar com backend");
   }
 }

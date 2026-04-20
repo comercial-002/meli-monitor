@@ -751,21 +751,19 @@ async function fetchAccountData(account) {
     }
   } catch(_) {}
 
-  return {
-    level_id:            rep.level_id,
-    power_seller_status: rep.power_seller_status,
-    transactions:        rep.transactions,
-    metrics: {
-      sales:                rep.metrics?.sales                || { period:'—', completed:0 },
-      claims:               rep.metrics?.claims               || { period:'—', rate:0, value:0 },
-      mediations:           rep.metrics?.mediations           || { period:'—', rate:0, value:0 },
-      cancellations:        rep.metrics?.cancellations        || { period:'—', rate:0, value:0 },
-      delayed_handling_time:rep.metrics?.delayed_handling_time|| { period:'—', rate:0, value:0 },
-    },
-    shipping: { logistic_type, schedule, processing_time, capacity }
-  };
-}
-
+return {
+  level_id:            rep?.level_id || '—',
+  power_seller_status: rep?.power_seller_status || '—',
+  transactions:        rep?.transactions || { completed: 0 },
+  metrics: {
+    sales:                rep?.metrics?.sales                || { period:'—', completed:0 },
+    claims:               rep?.metrics?.claims               || { period:'—', rate:0, value:0 },
+    mediations:           rep?.metrics?.mediations           || { period:'—', rate:0, value:0 },
+    cancellations:        rep?.metrics?.cancellations        || { period:'—', rate:0, value:0 },
+    delayed_handling_time:rep?.metrics?.delayed_handling_time|| { period:'—', rate:0, value:0 },
+  },
+  shipping: { logistic_type, schedule, processing_time, capacity }
+};
 // ════════════════════════════════════════════
 //  MODAL — OAUTH PKCE FLOW
 // ════════════════════════════════════════════

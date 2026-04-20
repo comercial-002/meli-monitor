@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   try {
-    // aceita tanto JSON quanto vazio (evita crash)
     let code;
+    let code_verifier;
 
     if (req.body) {
       try {
@@ -10,6 +10,8 @@ export default async function handler(req, res) {
           : req.body;
 
         code = parsed.code;
+        code_verifier = parsed.code_verifier;
+
       } catch (e) {
         return res.status(400).json({ error: 'Body inválido' });
       }
@@ -17,6 +19,10 @@ export default async function handler(req, res) {
 
     if (!code) {
       return res.status(400).json({ error: 'Code não enviado' });
+    }
+
+    if (!code_verifier) {
+      return res.status(400).json({ error: 'code_verifier não enviado' });
     }
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
@@ -29,13 +35,14 @@ export default async function handler(req, res) {
         client_id: process.env.CLIENT_ID,
         client_secret: process.env.CLIENT_SECRET,
         code,
-        redirect_uri: 'https://meli-monitor.vercel.app/callback.html'
+        redirect_uri: 'https://meli-monitor.vercel.app/callback.html',
+        code_verifier
       })
     });
 
     const data = await response.json();
 
-    return res.status(200).json(data);
+    return res.status(response.status).json(data);
 
   } catch (err) {
     return res.status(500).json({ error: err.message });

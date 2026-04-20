@@ -874,19 +874,13 @@ async function exchangeCodeForToken() {
     // Exchange code for token via ML API
     // Note: browsers block direct POST to api.mercadolibre.com from file:// due to CORS.
     // When served via HTTPS (Vercel/ngrok) this works correctly.
-    const res = await fetch('https://api.mercadolibre.com/oauth/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: _pendingAppId,
-        client_secret: _pendingSecret,
-        code,
-        redirect_uri: getRedirectURI(),
-        code_verifier: _pkce.verifier,
-      })
-    });
-
+    const res = await fetch('/api/token', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ code })
+});
     const data = await res.json();
     if (!res.ok || !data.access_token) {
       throw new Error(data.message || data.error || `Erro ${res.status}`);

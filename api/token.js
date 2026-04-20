@@ -1,6 +1,23 @@
 export default async function handler(req, res) {
   try {
-    const { code } = JSON.parse(req.body);
+    // aceita tanto JSON quanto vazio (evita crash)
+    let code;
+
+    if (req.body) {
+      try {
+        const parsed = typeof req.body === 'string'
+          ? JSON.parse(req.body)
+          : req.body;
+
+        code = parsed.code;
+      } catch (e) {
+        return res.status(400).json({ error: 'Body inválido' });
+      }
+    }
+
+    if (!code) {
+      return res.status(400).json({ error: 'Code não enviado' });
+    }
 
     const response = await fetch('https://api.mercadolibre.com/oauth/token', {
       method: 'POST',
@@ -18,9 +35,9 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    res.status(200).json(data);
+    return res.status(200).json(data);
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }

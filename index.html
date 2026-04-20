@@ -1511,12 +1511,19 @@ function toast(msg) {
   async function enviarCodigo(code) {
   try {
     const res = await fetch('/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ code })
-    });
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ code })
+})
+.then(res => res.json())
+.then(data => {
+  console.log("Token recebido:", data);
+})
+.catch(err => {
+  console.error("Erro:", err);
+});
 
     const data = await res.json();
     console.log("Resposta do backend:", data);

@@ -668,13 +668,13 @@ async function fetchAccountData(account) {
   }
 
   // ── 1. Reputation (/users/me) ──────────────
-  const userRes = await fetch(`${ML_API}/users/me`, {
-    headers: { 'Authorization': `Bearer ${account.token}` }
-  });
-  if (!userRes.ok) throw new Error(`Reputação: HTTP ${userRes.status}`);
-  const user = await userRes.json();
-  const rep  = user.seller_reputation;
-  const userId = user.id;
+  // const userRes = await fetch(`${ML_API}/users/me`, {
+//   headers: { 'Authorization': `Bearer ${account.token}` }
+// });
+// if (!userRes.ok) throw new Error(`Reputação: HTTP ${userRes.status}`);
+// const user = await userRes.json();
+// const rep  = user.seller_reputation;
+// const userId = user.id;
 
   // Detect logistic type from shipping_preferences
   let logistic_type = 'cross_docking'; // default for MLB

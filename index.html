@@ -1516,7 +1516,10 @@ async function testeDireto() {
     const res = await fetch('/api/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
+body: JSON.stringify({
+  code,
+  code_verifier: _pkce.verifier
+})
     });
 
     const data = await res.json();

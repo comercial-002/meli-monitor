@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "env": {
+    "ML_CLIENT_ID":     "@ml_client_id",
+    "ML_CLIENT_SECRET": "@ml_client_secret",
+    "MASTER_USER":      "@master_user",
+    "MASTER_PASSWORD":  "@master_password",
+    "JWT_SECRET":       "@jwt_secret"
+  }
+}

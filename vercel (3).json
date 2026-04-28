@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "*.html",   "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/_health", "dest": "/api/_health.js" },
+    { "src": "/api/auth",     "dest": "/api/auth.js" },
+    { "src": "/api/token",    "dest": "/api/token.js" },
+    { "src": "/api/ml",       "dest": "/api/ml.js" },
+    { "src": "/api/accounts", "dest": "/api/accounts.js" },
+    { "src": "/api/config",   "dest": "/api/config.js" },
+    { "src": "/callback.html","dest": "/callback.html" },
+    { "src": "/(.*)",         "dest": "/index.html" }
+  ]
+}
